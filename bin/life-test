@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import unittest
+
+sys.path.insert(0,os.getcwd())
+
+test_path = os.getcwd() + os.sep + "tests"
+suite = unittest.loader.TestLoader().discover(test_path, pattern="test*.py")
+unittest.TextTestRunner(verbosity=2).run(suite)

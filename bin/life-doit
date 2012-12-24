@@ -1,0 +1,7 @@
+# create a lifenest.. standalone distro based on eggs
+#
+#
+
+export PATH="./bin:.:$PATH"
+python3 setup.py sdist
+./bin/life-nest 

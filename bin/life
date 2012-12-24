@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+#
+#
+
+""" life and everything. """
+
+## path manipulation
+
+import os, sys
+if not os.getcwd() in sys.path: sys.path.insert(0, os.getcwd())
+
+## main program loop
+
+def main():
+    """ the main loop of L I F E, call this if you want the console bot. """
+    from life.console import Console
+    bot = Console()
+    bot.run()
+
+## call main
+
+from life.utils import shutdown, error
+
+try: main()
+except: error()
+shutdown()
