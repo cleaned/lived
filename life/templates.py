@@ -72,21 +72,4 @@ def save(event):
 
 save.cmnd = "save"
 
-## every 20 minutes
-
-def suicidecounter(event):
-    event.direct("every 20 minutes a suicide attempt is made (NL)")
-    while 1:
-        event.direct("tell them about the pain")
-        time.sleep(20*60)
-
-##  tell them about the pain
-
-def pain(event):
-    event.want_dispatch = True
-    event.do_exec = suicidecounter
-    get_kernel().put(event)
-
-pain.cmnd = "pain"
-
 '''
