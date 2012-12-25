@@ -58,7 +58,7 @@ class RunTime(O):
         """ stuff all the needed stuff in a core object and initialise them.  """
         from .tasks import Dispatcher
         from .plugins import Plugins 
-        from .utils import resolve_ip, make_datadir, make_plugin
+        from .utils import resolve_ip, make_datadir, make_plugin, resolve_host
         from .log import log_config
         opts, args = make_opts()
         if opts.loglevel: loglevel = opts.loglevel
@@ -73,6 +73,7 @@ class RunTime(O):
         self.run_opts = opts
         self.run_args = args
         self.ip = resolve_ip()
+        self.host = resolve_host()
         self.shelluser = getpass.getuser()
         self.packages = ["life.plugs", mj(self.root, "plugs")]
         self.plugin = Plugins(filename=j("run", "plugins"))

@@ -51,6 +51,17 @@ def resolve_ip(hostname=None, timeout=1.0):
     socket.setdefaulttimeout(oldtimeout)
     return ip
 
+## resolve_host function
+
+def resolve_host(ip=None, timeout=1.0):
+    """ determine the ip address we are running on, we use this for creatin an id. """
+    oldtimeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(timeout)
+    try: host = socket.gethostbyaddr(ip or resolve_ip())[0]
+    except socket.timeout: host = None
+    socket.setdefaulttimeout(oldtimeout)
+    return host
+
 ## make_opts
 
 def make_opts():

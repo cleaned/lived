@@ -75,8 +75,7 @@ class Console(O):
                 intxt = input("%s -=- %s%s<%s " % (time.strftime(datefmt), BOLD, YELLOW, ENDC))
                 if not intxt: continue
                 if self.stopped: return
-                u = "shell-%s" % kernel.shelluser
-                event = O(bot=self, origin=u, channel=u, txt=intxt, cbtype="console")
+                event = O(bot=self, origin="shell", channel=kernel.shelluser, input=intxt, cbtype="console")
                 event.prepare()
                 e = kernel.put(event)
                 e.wait()

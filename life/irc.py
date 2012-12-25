@@ -90,7 +90,7 @@ class IRC(O):
     def __init__(self, *args, **kwargs):
         O.__init__(self, *args, **kwargs)
         if "name" not in self.cfg: self.cfg.name = "default-irc"
-        if "username" not in self.cfg: self.cfg.name = "default-irc"
+        if "username" not in self.cfg: self.cfg.username = "default-irc"
         if "nick" not in self.cfg: self.cfg.nick = "lijf"
         if "ipv6" not in self.cfg: self.cfg.ipv6 = False
         if "server" in kwargs: self.cfg.server = kwargs["server"]

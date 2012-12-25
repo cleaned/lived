@@ -68,19 +68,37 @@ class O(dict):
         if type(self) not in jsontypes: jsontypes.append(type(self))
 
     def get_id(self):
-        return "%s.%s.%s.%s" % (self.origin, self.channel, self.ctime, self.get_type())
+        return "%s-%s-%s-%s" % (self.get_origin(), self.channel, self.get_type(), self.resolved)
 
     def get_type(self):
         cbt = self.__class__.__name__ 
         ocb = self.__class__.__module__
         return '%s.%s' % (self.otype or ocb, self.cbtype or cbt)
 
+    def get_path(self):
+        """ make the path of this file. encode the file part if badchars are encountered. """
+        if not "filename" in self: self.filename = self.get_id()
+        kernel = get_kernel()
+        try: head, fn = os.path.split(os.path.abspath(j(kernel.root, self.filename)))
+        except AttributeError: raise NoFileName(self.filename)
+        if not fn: return head 
+        from .utils import make_dir
+        make_dir(head)       
+        if enc_needed(fn): fn = enc_name(fn)
+        return j(head, fn)
+
+    def get_origin(self):
+        return "%s-%s" % (self.kernel.shelluser, self.kernel.host)
+
     def __getattr__(self, name):
         try: return self[name]
         except KeyError: self.init(name)
         try: return self[name]
-        except KeyError: return None
+        #except KeyError: return None
         #except KeyError: raise AttributeError(name)
+        except KeyError:
+            if name == "kernel": return get_kernel()
+            return None
 
     def __setattr__(self, name, value):
         """ set an attribute, check if no method is overridden and if same types get assigned (string can be overridden). """
@@ -101,27 +119,14 @@ class O(dict):
     def init(self, name, *args, **kwargs):
         if name not in self:
             if name in otypes: self[name] = O() 
+            if name == "resolved": self[name] = "later"
             if name == "ctime": self[name] = time.time()
-            if name == "channel": self[name] = ""
-            if name == "channel": self[name] = ""
+            if name == "origin": self[name] = self.get_origin()
+            if name == "channel": self[name] = "sink"
             if name == "chan": self[name]["cc"] = ";"
             if name == "ready": self[name] = threading.Event()
             if name == "uuid": self[name] = str(uuid.uuid4())
         return self
-
-    ## calculate the location of this object
-
-    def get_path(self):
-        """ make the path of this file. encode the file part if badchars are encountered. """
-        if not "filename" in self: self.filename = self.get_id()
-        kernel = get_kernel()
-        try: head, fn = os.path.split(os.path.abspath(j(kernel.root, self.filename)))
-        except AttributeError: raise NoFileName(self.filename)
-        if not fn: return head 
-        from .utils import make_dir
-        make_dir(head)       
-        if enc_needed(fn): fn = enc_name(fn)
-        return j(head, fn)
 
     ## output methods
 
@@ -267,7 +272,7 @@ class O(dict):
             try: post = callback.post
             except AttributeError: self.status[str(time.ctime(time.time()))] = "no post" ; self.do_status = True ; continue
             post(target)
-        target.resolved = "cb"
+            target.resolved = get_name(callback)
         return target
 
     def dispatch(self, *args, **kwargs):
@@ -288,7 +293,7 @@ class O(dict):
                 try: post_func = getattr(command, "post")
                 except AttributeError: post_func = None  
                 if post_func: post_func(target)
-        target.resolved = "cmnd"
+                target.resolved = get_name(command)
         return target
 
     def execute(self, *args, **kwargs):
@@ -305,7 +310,7 @@ class O(dict):
         try: post_func = getattr(func, "post")
         except AttributeError: post_func = None  
         if post_func: post_func(target)
-        target.resolved = "thread"
+        target.resolved = get_name(func)
         target.done()
         return target
 
@@ -349,7 +354,7 @@ class O(dict):
             except AttributeError: continue
 
     def parse(self, *args, **kwargs):
-        if "input" in self: self.txt = ";%s" % self.input
+        if "input" in self: self.txt = "%s" % self.input
 
 ## boot life
 
