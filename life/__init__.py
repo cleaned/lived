@@ -67,21 +67,25 @@ class O(dict):
         dict.__init__(self, **kwargs)
         if type(self) not in jsontypes: jsontypes.append(type(self))
 
-    def __repr__(self):
+    def get_id(self):
+        return "%s.%s.%s.%s" % (self.origin, self.channel, self.ctime, self.get_type())
+
+    def get_type(self):
         cbt = self.__class__.__name__ 
         ocb = self.__class__.__module__
-        return '%s.%s' % (ocb, cbt)
+        return '%s.%s' % (self.otype or ocb, self.cbtype or cbt)
 
     def __getattr__(self, name):
         try: return self[name]
         except KeyError: self.init(name)
         try: return self[name]
-        except KeyError: raise AttributeError(name)
+        except KeyError: return None
+        #except KeyError: raise AttributeError(name)
 
     def __setattr__(self, name, value):
         """ set an attribute, check if no method is overridden and if same types get assigned (string can be overridden). """
         t = type(value)
-        if name in self and t == types.MethodType: raise OverloadError(name)
+        if name in self and t in [types.MethodType, types.FunctionType]: raise OverloadError(name)
         if t != "" and name in self and type(value) != t: raise NotSameType(name)
         self[name] = value
         return self
@@ -97,6 +101,8 @@ class O(dict):
     def init(self, name, *args, **kwargs):
         if name not in self:
             if name in otypes: self[name] = O() 
+            if name == "ctime": self[name] = time.time()
+            if name == "channel": self[name] = ""
             if name == "channel": self[name] = ""
             if name == "chan": self[name]["cc"] = ";"
             if name == "ready": self[name] = threading.Event()
@@ -116,13 +122,6 @@ class O(dict):
         make_dir(head)       
         if enc_needed(fn): fn = enc_name(fn)
         return j(head, fn)
-
-    ## calculate the object id
-
-    def get_id(self):
-        if "cbtype" not in self: self.cbtype = "default"
-        if "otype" not in self: self.otype = "event"
-        return "%s%s%s-%s-%s" % (self.otype, os.sep, self.uuid, repr(self), time.time())
 
     ## output methods
 

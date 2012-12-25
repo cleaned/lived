@@ -50,7 +50,7 @@ re_dcc = re.compile('\001DCC CHAT CHAT (\S+) (\d+)\001', re.I)
 dirmask = 0o700
 filemask = 0o600
 allowedchars = string.ascii_letters + string.digits + "_,-."
-datefmt = BLUE + '%H:%M:%S' + ENDC
+datefmt = BOLD + BLUE + '%H:%M:%S' + ENDC
 
 format = "%(asctime)-8s -=- %(message)-74s -=- (%(module)s.%(funcName)s.%(lineno)s)"
 format_small = "%(asctime)-8s -=- %(message)-75s"

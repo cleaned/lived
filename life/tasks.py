@@ -56,7 +56,7 @@ class TaskRunner(threading.Thread):
             if not task: logging.debug("no task %s" % str(args)) ; continue
             if self.stopped: break
             self.running = True
-            if "cbtype" in task: logging.debug("task %s" % task.cbtype)
+            if "cbtype" in task: logging.warn("task %s" % task.get_id())
             self.counter += 1
             self.lasttime = time.time()
             try: self.handle_task(task)
