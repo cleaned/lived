@@ -143,7 +143,8 @@ def make_plugin(ddir):
 
 def get_where(search=""):
     """ search the callstack for a certain txt. """
-    for loc in callstack():
+    for loc in callstack(search):
+        print(loc)
         if search in loc: return loc
 
 ## dump_frame function
@@ -170,7 +171,7 @@ def callstack(want=""):
     while 1:
         try: back = loopframe.f_back
         except AttributeError: break
-        codename = get_name(back.f_code)
+        if not back: break
         filename = back.f_code.co_filename
         mod = []
         for i in filename.split(os.sep)[::-1]:
@@ -181,7 +182,7 @@ def callstack(want=""):
         modstr = ".".join(mod[::-1])
         try: lineno = back.f_lineno
         except AttributeError: lineno = "-1"
-        result.append("%s.%s:%s" % (modstr, codename, lineno))
+        result.append("%s:%s" % (modstr, lineno))
         if want in modstr: break
         try: loopframe = back.f_back
         except AttributeError: break
@@ -195,7 +196,7 @@ def get_name(obj):
     obj_name = str(obj)
     for name, regex in regular.items():
         target = re.search(regex, obj_name)
-        if target: return "%s.%s" % (name, target.group(1))
+        if target: return ".".join(target.groups())
     return obj_name
 
 ## exceptionmsg function

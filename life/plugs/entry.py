@@ -21,4 +21,4 @@ def entry(event):
     if t: event.enteredtime = t ; event.reply("time set at %s" % time.ctime(t))
     event.save()
 
-entry.cb = "console"
+entry.cb = "CONSOLE"

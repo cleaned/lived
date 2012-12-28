@@ -67,13 +67,16 @@ class O(dict):
         dict.__init__(self, **kwargs)
         if type(self) not in jsontypes: jsontypes.append(type(self))
 
-    def get_id(self):
-        return "%s-%s-%s-%s" % (self.get_origin(), self.channel, self.get_type(), self.resolved)
+    def __repr__(self):
+        return '%s.%s' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+        )
 
-    def get_type(self):
-        cbt = self.__class__.__name__ 
-        ocb = self.__class__.__module__
-        return '%s.%s' % (self.otype or ocb, self.cbtype or cbt)
+    def get_type(self): return self.cbtype
+
+    def get_id(self):
+        return j(self.otype, "%s-%s-%s-%s" % (self.origin or "void", repr(self), self.channel or "default", self.resolved or "later"))
 
     def get_path(self):
         """ make the path of this file. encode the file part if badchars are encountered. """
@@ -84,18 +87,13 @@ class O(dict):
         if not fn: return head 
         from .utils import make_dir
         make_dir(head)       
-        if enc_needed(fn): fn = enc_name(fn)
+        #if enc_needed(fn): fn = enc_name(fn)
         return j(head, fn)
-
-    def get_origin(self):
-        return "%s-%s" % (self.kernel.shelluser, self.kernel.host)
 
     def __getattr__(self, name):
         try: return self[name]
         except KeyError: self.init(name)
         try: return self[name]
-        #except KeyError: return None
-        #except KeyError: raise AttributeError(name)
         except KeyError:
             if name == "kernel": return get_kernel()
             return None
@@ -118,13 +116,14 @@ class O(dict):
 
     def init(self, name, *args, **kwargs):
         if name not in self:
-            if name in otypes: self[name] = O() 
+            if name in otypes: self[name] = O() ; self[name].otype = name
+            if name == "otype": self[name] = self.name or "noname"
             if name == "resolved": self[name] = "later"
             if name == "ctime": self[name] = time.time()
-            if name == "origin": self[name] = self.get_origin()
+            if name == "origin": self[name] = get_kernel().shellid
             if name == "channel": self[name] = "sink"
             if name == "chan": self[name]["cc"] = ";"
-            if name == "ready": self[name] = threading.Event()
+            if name == "_ready": self[name] = threading.Event()
             if name == "uuid": self[name] = str(uuid.uuid4())
         return self
 
@@ -143,11 +142,13 @@ class O(dict):
 
     def display(self, txt="", target=None):
         """ display results via self._bot """
-        for key, item in self.result.items():
-            if not target:
-                target = self.say
-                target(item.channel, item.txt)
-            else: target(item.txt)
+        if not target: target = self.say
+        for key in self.result.strip():
+            item = self.result[key]
+            try: target(item.channel, item.txt)
+            except AttributeError:
+                try: target(item.txt)
+                except AttributeError: continue
         self.save_as("display")
 
     def say(self, *args, **kwargs):
@@ -159,7 +160,7 @@ class O(dict):
         """ wait for the results to show up. """
         logging.info("waiting %s seconds" % sec)
         self.prepare()
-        self.ready.wait(sec)
+        self._ready.wait(sec)
         if not self.result: raise TryAgain()
         return self
 
@@ -248,14 +249,14 @@ class O(dict):
     def register(self, *args, **kwargs):
         """ add an O to this one. """   
         if len(args) != 3: raise NoArgument()
-        otype = args[0]
-        name = args[1] 
-        item = args[2] 
-        if "name" in self: sname = self.name
-        else: sname = get_name(self)
-        logging.warn("register %s.%s in %s" % (otype, name, sname))
-        if name not in self: self[name] = []
-        if item not in self[name]: self[name].append(item)
+        task = O()
+        task.otype = args[0]
+        task.name = args[1] 
+        task.item = args[2] 
+        task.etype = get_name(task.item)
+        logging.warn("register %s.%s in %s" % (task.otype, task.name, self.name))
+        if task.name not in self: self[task.name] = []
+        if task not in self[task.name]: self[task.name].append(task)
         return self
 
     ## power core dispatching stuff - running code on the O data
@@ -263,7 +264,8 @@ class O(dict):
     def run_cb(self, *args, **kwargs):
         if args: target = args[0]
         else: target = self
-        for callback in self.get_reg("cb", target.cbtype):
+        for i in self.get_reg("cb", target.cbtype):
+            callback = i.item
             logging.info("cb %s - %s" % (target.cbtype, str(callback)))
             try: pre = getattr(callback, "pre")
             except AttributeError: self.status[str(time.ctime(time.time()))] = "no pre" ; pre = None ; self.do_status = True
@@ -284,7 +286,8 @@ class O(dict):
             target.want_dispatch = True
             logging.info("dispatch %s" % target.cmnd)
             commands = kernel.get_reg("cmnd", target.cmnd)
-            for command in commands:
+            for i in commands:
+                command = i.item
                 try: pre_func = getattr(command, "pre")
                 except AttributeError: pre_func = None 
                 if pre_func and not pre_func(target): logging.info("pre failed") ; return
@@ -346,7 +349,7 @@ class O(dict):
 
     def done(self):
         """ signal when the event is processed. """
-        self.ready.set() 
+        self._ready.set() 
 
     def iters(self):
         for item in self.values():

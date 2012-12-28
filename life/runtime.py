@@ -35,7 +35,7 @@ class RunTime(O):
         if args: ddir = args[0]
         else: ddir = ""
         self.bots = []
-        self.datadir = ddir or ".life"
+        self.datadir = ddir or os.getcwd() + os.sep + "kdir"
         self.homedir = os.path.expanduser("~")
         self.prepare()
         if not self.datadir in sys.path: sys.path.append(self.root)
@@ -52,7 +52,7 @@ class RunTime(O):
                 logging.warn("shutting down %s" % bottype)
                 try: exit = getattr(bot, "exit")
                 except (AttributeError, TypeError): continue
-                exit()
+                if exit: exit()
         
     def boot(self):
         """ stuff all the needed stuff in a core object and initialise them.  """
@@ -75,6 +75,7 @@ class RunTime(O):
         self.ip = resolve_ip()
         self.host = resolve_host()
         self.shelluser = getpass.getuser()
+        self.shellid = "%s@%s" % (self.shelluser, self.host)
         self.packages = ["life.plugs", mj(self.root, "plugs")]
         self.plugin = Plugins(filename=j("run", "plugins"))
         self.cb = O(name="cb")
@@ -95,7 +96,7 @@ class RunTime(O):
 
     def handle_args(self, *args, **kwargs):
         event = O(**kwargs)
-        event.cbtype = "console"
+        event.cbtype = "ARGS"
         event.txt = ";" + " ".join(self.run_args)
         event.prepare()
         event.want_dispatch = True

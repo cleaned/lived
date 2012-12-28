@@ -24,11 +24,12 @@ import re
 
 regular = {
     "code": re.compile("code\s+object\s+(\S+)", re.I),
-    "meth": re.compile('method\s+(\S+)', re.I),
+    "meth": re.compile('method\s+(\S+)\s+of', re.I),
     "func": re.compile("function\s+(\S+)", re.I),
     "obj": re.compile('<(\S+)\s+object', re.I),
     "cls": re.compile("class\s+'(\S+)'>", re.I),
     "mod": re.compile("module\s+'(\S+)'", re.I),
+    "life": re.compile('<(\S+)\s+(\S+)\s+at', re.I),
 }
 
 ## the defines !!

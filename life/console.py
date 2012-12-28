@@ -59,6 +59,8 @@ class Console(O):
         """ start this bot. this function does not return until KeyboardInterrupt """
         kernel = get_kernel()
         kernel.boot()
+        self.cfg.server = kernel.host
+        self.cfg.user = kernel.shelluser
         if kernel.run_args and not "start" in kernel.run_args: kernel.handle_args() ; return
         if not kernel.silent: print("commands are: %s\n" % ", ".join(kernel.cmnd.keys()))
         try:
@@ -75,7 +77,7 @@ class Console(O):
                 intxt = input("%s -=- %s%s<%s " % (time.strftime(datefmt), BOLD, YELLOW, ENDC))
                 if not intxt: continue
                 if self.stopped: return
-                event = O(bot=self, origin="shell", channel=kernel.shelluser, input=intxt, cbtype="console")
+                event = O(bot=self, origin=kernel.shellid, channel="shell", input=intxt, cbtype="CONSOLE")
                 event.prepare()
                 e = kernel.put(event)
                 e.wait()

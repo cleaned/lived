@@ -11,5 +11,5 @@ def do_dispatch(event):
     e = kernel.dispatch(event)
     event.display()
 
-do_dispatch.cb = ["PRIVMSG", "console"]
+do_dispatch.cb = ["PRIVMSG", "CONSOLE"]
 
